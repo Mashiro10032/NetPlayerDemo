@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>播放器</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.1/css/all.css" rel="stylesheet">
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        li {
+            list-style-type: none;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .main {
+            width: 653px;
+            height: 653px;
+            /* background-color: cadetblue; */
+            position: relative;
+            /* display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column; */
+            overflow: hidden;
+        }
+
+        .main .player-Wrap {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: url(./images/bg_circle.png) center no-repeat;
+            position: absolute;
+            /* animation: ; */
+        }
+
+        .main .cover {
+            height: 399px;
+            width: 399px;
+            background: url(./images/bg_center.png) no-repeat center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .main .switch {
+            width: 95px;
+            height: 94px;
+            background: url(./images/btn-bg.png) no-repeat center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            line-height: 95px;
+            font-size: 26px;
+            color: #6d4934;
+        }
+
+        @keyframes runrunrun {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 搜索 */
+        .search-Wrap {
+            position: relative;
+        }
+
+        .search {
+            width: 400px;
+            height: 55px;
+            font-size: 55px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+        }
+
+        .search:hover .search-input {
+            width: 200px;
+        }
+
+        .search .search-input {
+            height: 35px;
+            width: 0;
+            border: none;
+            outline: none;
+            border-bottom: 1px solid #000;
+            transition: all 1s;
+            font-size: 22px;
+            text-align: center;
+
+        }
+
+        ul {
+            width: 400px;
+            /* height: 100px; */
+            background-color: rgba(255, 255, 255, 0.568);
+            border: 1px solid #000;
+            position: absolute;
+            z-index: 99;
+            display: none;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        ul li {
+            list-style: none;
+            border: 1px solid #000;
+        }
+
+        ul li .fa-chevron-down {
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="search-Wrap">
+        <div class="search">
+            <input type="text" class="search-input">
+            <i class="fas fa-search"></i>
+
+        </div>
+        <ul><i class="fas fa-chevron-down"></i></ul>
+    </div>
+    <div class="main">
+
+        <div class="player-Wrap">
+            <div class="cover"></div>
+            <!-- 通过JS来把play替换成pause -->
+            <audio src="https://music.163.com/song/media/outer/url?id=381962.mp3"></audio>
+        </div>
+        <a href="javascript:void(0);" class="switch fa fa-play"></a>
+    </div>
+
+    <script>
+        /*
+            @Copyright 2021-6-27 音乐播放器 H5 基于网易云API的网络音乐播放器 by https://github.com/Mashiro10032 All rights reserved
+             请勿删除此条注释 谢谢!
+       */
+        window.onload = function () {
+            // 先定义好变量
+            // 我尽量使用ES5的  但是网络请求函数就不用XMLHttprequest了
+            var playBtn = document.querySelector('.switch');
+            var audio = document.querySelector('audio');
+            var playerWrap = document.querySelector('.player-Wrap');
+            var ul = document.querySelector('ul');
+            var searchInput = document.querySelector('.search-input')
+            var faSearch = document.querySelector('.fa-search');
+            var keywords = null;
+            var li = null;
+            var data = null
+            var i = null;
+
+            document.querySelector('.fa-chevron-down').onclick = function () {
+                ul.style.display = 'none';
+            };
+
+            // console.log(audio);
+            playBtn.onclick = function () {
+                isPlay();
+            };
+
+            function isPlay() {
+                if (audio.paused) {
+                    audio.play();
+                    playerWrap.style.animation = 'runrunrun infinite linear 5s';
+                    playBtn.classList.remove('fa-play');
+                    playBtn.classList.add('fa-pause')
+
+                } else {
+                    audio.pause();
+                    playerWrap.style.animationPlayState = 'paused'
+                    playBtn.classList.remove('fa-pause');
+                    playBtn.classList.add('fa-play')
+                }
+            }
+
+
+            // 381962  37806 /check/music?id=33894312 381962 /check/music?id=
+            // xhr.open('get','https://api.wick32.cn/song/url?id=381962');
+            faSearch.onclick = function () {
+                var lis = document.querySelectorAll('li');
+                // 每次执行查询的时候 先把li给全部删除 不然上一条查询的数据还会留在页面上
+                lis.forEach(v => {
+                    console.log(v);
+                    v.remove();
+                })
+                
+                keywords = searchInput.value;
+                if (searchInput.value == '') {
+                    alert("请输入关键词来查询音乐!");
+                } else {
+                    ul.style.display = 'block';
+                    // ES6的基于Promise的fetch 用于替代XMLhttprequest成为新一代的ajax请求方法
+                    // fetch(第一参数,第二参数) 第一个参数是请求的URL 第二个参数是请求方法 默认是get
+                    // 具体如何使用 百度搜素 阮一峰 fetch
+                    fetch("https://api.wick32.cn/search?keywords=" + keywords).then(function (res) {
+                        return res = res.json();
+                    }).then(function (res) {
+                        // 可以上控制台输出返回的结果 看数据的结构
+                        console.log(res);
+                        data = res.result.songs;
+                        data.forEach(function (item, index) {
+                            // 使用forEach来遍历返回的数据
+                            // 使用document.createElement()来创建一个'li'元素
+                            // 自行百度dataset的使用方法
+                            // 使用innerText来给li填出内容 内容就是遍历出来的音乐名字+专辑名
+                            // 使用appendChild(li)来向父元素ul插入li元素
+                            li = document.createElement('li');
+                            li.dataset['index'] = index;
+                            li.innerText = item.name + ' - ' + item.album.name;
+                            ul.appendChild(li);
+
+                        })
+                    })
+                }
+                ul.addEventListener('click', function (e) {
+                    // console.log(e.target.getAttribute('data-index'));
+                    // 自行百度getAttribute的使用方法
+                    i = e.target.getAttribute('data-index');
+                    data.forEach(function (item, index) {
+                        // console.log(i == index);
+                        // console.log(index);
+                        if (i == index) {
+                            // console.log(item.id);
+                            audio.muted = true;
+                            // 必须先暂停播放再替换src 不然会报错
+                            audio.pause();
+                            audio.src =
+                                'https://music.163.com/song/media/outer/url?id=' + item
+                                .id + '.mp3';
+                            isPlay();
+                            audio.muted = false;
+                        } else {
+                            return
+                        }
+                    })
+                })
+            }
+        }
+    </script>
+</body>
+
+</html>
